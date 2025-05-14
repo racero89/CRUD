@@ -17,7 +17,7 @@ app.get("/", (res, req) => {
   res.send(`
   <h1>Lista de usuarios</h1>)
   <ul>
-    ${usuario
+    ${usuarios
       .map(
         (usuario) => `<li>ID: ${usuario.id} | nombre: ${usuario.nombre}</li>`
       )
