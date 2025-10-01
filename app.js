@@ -1,5 +1,7 @@
 const express = require("express");
 const app = express();
+const PORT = 3000;
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -11,52 +13,57 @@ let usuarios = [
   { id: 5, nombre: "Blanka", edad: 32, lugarProcedencia: "Brasil" },
 ];
 
-//READ
-
-app.get("/", (res, req) => {
-  res.send(`
-  <h1>Lista de usuarios</h1>)
-  <ul>
-    ${usuarios
-      .map(
-        (usuario) => `<li>ID: ${usuario.id} | nombre: ${usuario.nombre}</li>`
-      )
-      .join("")}
-    </ul>
-    `);
+app.get("/usuarios", (req, res) => {
+  res.json(usuarios);
 });
 
-app.post(`/usuario`, (res, req) => {
-  const nuevoUsuario = {
-    id: usuario.length + 1,
-    nombre: req.body.nombre,
-  };
+app.get("/usuarios/:nombre", (req, res) => {
+  const { nombre } = req.params;
+  const usuario = usuarios.find(
+    (u) => u.nombre.toLowerCase() === nombre.toLowerCase()
+  );
+  if (!usuario)
+    return res.status(404).json({ mensaje: "Usuario no encontrado" });
+  res.json(usuario);
+});
+
+app.post("/usuarios", (req, res) => {
+  const { nombre, edad, lugarProcedencia } = req.body;
+  const id = usuarios.length ? usuarios[usuarios.length - 1].id + 1 : 1;
+  const nuevoUsuario = { id, nombre, edad, lugarProcedencia };
   usuarios.push(nuevoUsuario);
-  res.redirect(`/`);
+  res.status(201).json(nuevoUsuario);
 });
 
 app.put("/usuarios/:nombre", (req, res) => {
-  const nombreUsuario = req.params.nombre;
+  const { nombre } = req.params;
+  const { edad, lugarProcedencia } = req.body;
   const index = usuarios.findIndex(
-    (usuario) => usuario.nombre === nombreUsuario
+    (u) => u.nombre.toLowerCase() === nombre.toLowerCase()
   );
-  if (index !== -1) {
-    usuarios[index] = { ...usuarios[index], ...req.body };
-    res.json({
-      mensaje: `Usuario ${nombreUsuario} actualizado`,
-      usuario: usuarios[index],
-    });
-  } else {
-    res.status(404).json({ mensaje: `Usuario ${nombreUsuario} no encontrado` });
-  }
+  if (index === -1)
+    return res.status(404).json({ mensaje: "Usuario no encontrado" });
+
+  if (edad) usuarios[index].edad = edad;
+  if (lugarProcedencia) usuarios[index].lugarProcedencia = lugarProcedencia;
+
+  res.json(usuarios[index]);
 });
 
 app.delete("/usuarios/:nombre", (req, res) => {
-  const nombreUsuario = req.params.nombre;
-  usuarios = usuarios.filter((usuario) => usuario.nombre !== nombreUsuario);
-  res.json({ mensaje: `Usuario ${nombreUsuario} eliminado` });
+  const { nombre } = req.params;
+  const usuarioExistente = usuarios.find(
+    (u) => u.nombre.toLowerCase() === nombre.toLowerCase()
+  );
+  if (!usuarioExistente)
+    return res.status(404).json({ mensaje: "Usuario no encontrado" });
+
+  usuarios = usuarios.filter(
+    (u) => u.nombre.toLowerCase() !== nombre.toLowerCase()
+  );
+  res.json({ mensaje: `Usuario ${nombre} eliminado correctamente` });
 });
 
-app.listen(3000, () => {
-  console.log("express esta escuchando en el puerto 3000");
+app.listen(PORT, () => {
+  console.log(`Servidor escuchando en http://localhost:${PORT}`);
 });
